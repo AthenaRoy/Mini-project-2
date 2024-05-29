@@ -1,0 +1,4 @@
+numpy==1.22.0
+opencv-python==4.4.0.44
+tensorflow==2.11.1
+jupyter notebook

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Video</title>
+<link rel="stylesheet" href="upload.css">
+</head>
+<body>
+    <div class="header">
+        <div class="back-button">Back</div>
+        <div class="signout-button">Sign Out</div>
+    </div>
+    <div class="container">
+        <div class="box">
+            <h2>Upload Video</h2>
+            <a href="http://127.0.0.1:5000/upload" class="button">Upload from Gallery</a>
+            <button class="button">Use Webcam</button>
+        </div>
+    </div>
+
+    <!-- Popup Modal -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <a href="#" class="close-btn">&times;</a>
+            <h2>Select and Upload Your File </h2>
+            <input type="text" id="productName" class="popup-input" placeholder="Enter Product Name">
+
+            <input type="file" id="fileInput" class="popup-btn">
+            <!-- <p id="fileName">No file chosen</p> -->
+            <button class="popup-btn">Upload File</button>
+        </div>
+    </div>
+</body>
+</html>
+

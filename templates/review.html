@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Reviews</title>
+</head>
+<body>
+    <h1>Product Reviews</h1>
+
+    <form method="POST" action="/reviews">
+        <label for="product_name">Enter Product Name:</label>
+        <input type="text" id="product_name" name="product_name">
+        <button type="submit">Get Review</button>
+    </form>
+
+    {% if product_name %}
+        <h2>Review for {{ product_name }}</h2>
+        <p>{{ review }}</p>
+    {% endif %}
+</body>
+</html>
