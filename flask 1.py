@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, flash
+from flask import Flask, redirect, url_for, render_template, request, session, flash, send_from_directory
 from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
 
@@ -66,7 +66,9 @@ class UploadFileForm(FlaskForm):
     submit = SubmitField("Upload File")
 
 
-
+@app.route('/static/<path:filename>')
+def custom_static(filename):
+    return send_from_directory(app.static_folder, filename)
 
 @app.route('/reviews', methods=['GET', 'POST'])
 def video_review():
