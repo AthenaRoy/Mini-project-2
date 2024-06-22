@@ -1,3 +1,6 @@
 .env
 frames/*
 flask_/frames/*
+**.mp4
+*_model.h5
+**_model.h5

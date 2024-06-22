@@ -14,5 +14,67 @@
             <p>Product Name:</p>
             <p><input type="text" name="product_name" /></p>
         </form>
+
+    <!-- Button to execute the script -->
+    <button id="execute-button">Execute Script</button>
+    <!-- Loading message -->
+    <div id="loading">Loading...</div>
+    <!-- Div to display the output -->
+    <div id="output"></div>
+    <!-- Button to fetch logs -->
+    <button id="logs-button">Show Logs</button>
+    <!-- Div to display the logs -->
+    <div id="logs"></div>
+
+    <script>
+        document.getElementById('execute-button').addEventListener('click', function() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('output').innerText = '';
+            document.getElementById('logs').style.display = 'none';
+
+            fetch('/execute_script', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                if (data.success) {
+                    document.getElementById('output').innerText = 'Script executed successfully: ' + data.output;
+                } else {
+                    document.getElementById('output').innerText = 'Error: ' + data.error;
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('output').innerText = 'Error: ' + error;
+            });
+        });
+
+        document.getElementById('logs-button').addEventListener('click', function() {
+            fetch('/get_logs', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('logs').style.display = 'block';
+                    document.getElementById('logs').innerText = data.logs;
+                } else {
+                    document.getElementById('logs').innerText = 'Error: ' + data.error;
+                }
+            })
+            .catch(error => {
+                document.getElementById('logs').innerText = 'Error: ' + error;
+            });
+        });
+    </script>
+
+
     </body>
 </html>

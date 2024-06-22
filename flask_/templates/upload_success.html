@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Upload Successful</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Upload Successful</h1>
+    <p>Your file has been successfully uploaded.</p>
+
+    <!-- Button to execute the script -->
+    <button id="execute-button">Execute Script</button>
+    <!-- Loading message -->
+    <div id="loading">Loading...</div>
+    <!-- Div to display the output -->
+    <div id="output"></div>
+    <!-- Button to fetch logs -->
+    <button id="logs-button">Show Logs</button>
+    <!-- Div to display the logs -->
+    <div id="logs"></div>
+
+    <script>
+        document.getElementById('execute-button').addEventListener('click', function() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('output').innerText = '';
+            document.getElementById('logs').style.display = 'none';
+
+            axios.post('/execute_script')
+                .then(response => {
+                    document.getElementById('loading').style.display = 'none';
+                    if (response.data.success) {
+                        document.getElementById('output').innerText = 'Script executed successfully: ' + response.data.output;
+                    } else {
+                        document.getElementById('output').innerText = 'Error: ' + response.data.error;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('output').innerText = 'Error: ' + error.message;
+                });
+        });
+
+        document.getElementById('logs-button').addEventListener('click', function() {
+            axios.get('/get_logs')
+                .then(response => {
+                    if (response.data.success) {
+                        document.getElementById('logs').style.display = 'block';
+                        document.getElementById('logs').innerText = response.data.logs;
+                    } else {
+                        document.getElementById('logs').innerText = 'Error: ' + response.data.error;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('logs').innerText = 'Error: ' + error.message;
+                });
+        });
+    </script>
+
+</body>
+</html>
