@@ -1,6 +1,4 @@
 import os
-os.environ['PYTHONIOENCODING'] = 'utf-8'
-
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
@@ -38,7 +36,6 @@ def plot_model_history(model_history):
     axs[1].legend(['train', 'val'], loc='best')
     fig.savefig('plot.png')
     plt.show()
-
 
 #Data gfenerators
 
@@ -177,7 +174,8 @@ def download_video_from_firebase(file_name):
         with open(download_path, "wb") as file_obj:
             blob.download_to_file(file_obj)
         print(f"Downloaded {file_name} to {download_path}")
-        return download_path  # Return the download path for further processing
+
+
     except FirebaseError as e:
         print(f"Error downloading {file_name}: {e}")
         return None
@@ -223,7 +221,7 @@ def process_video(download_path):
                       loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
                       metrics=['accuracy'])
         
-        
+        os.environ['PYTHONIOENCODING'] = 'utf-8'
         history = model.fit(
             train_generator,
             steps_per_epoch=num_train // batch_size,

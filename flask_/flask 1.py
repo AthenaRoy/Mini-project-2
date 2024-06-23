@@ -27,7 +27,6 @@ firebase_admin.initialize_app(cred, {
 })
 
 
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -135,6 +134,7 @@ def view():
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
+    form = RegistrationForm()
     if request.method == "POST":
         user = request.form["username"]
         passcode = request.form["passcode"]
@@ -153,7 +153,7 @@ def login():
             return redirect(url_for("register"))
         
          
-    return render_template("login.html")
+    return render_template("final_login.html",form=form)
 
 
 @app.route("/user", methods=["POST" , "GET"])
