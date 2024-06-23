@@ -1,0 +1,12 @@
+INFO:root:Detection script started.
+DEBUG:urllib3.util.retry:Converted retries value: 3 -> Retry(total=3, connect=None, read=None, redirect=None, status=None)
+DEBUG:google.auth.transport.requests:Making request: POST https://oauth2.googleapis.com/token
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): oauth2.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://oauth2.googleapis.com:443 "POST /token HTTP/1.1" 200 None
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): storage.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://storage.googleapis.com:443 "GET /storage/v1/b/mini-project-d9780.appspot.com/o?projection=noAcl&prettyPrint=false HTTP/1.1" 200 832
+DEBUG:urllib3.connectionpool:https://storage.googleapis.com:443 "GET /download/storage/v1/b/mini-project-d9780.appspot.com/o/videos%2FFlexpressions.mp4?alt=media HTTP/1.1" 200 2070116
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+DEBUG:h5py._conv:Creating converter from 5 to 3
+DEBUG:h5py._conv:Creating converter from 3 to 5
+WARNING:absl:No training configuration found in the save file, so the model was *not* compiled. Compile it manually.

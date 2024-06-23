@@ -210,7 +210,8 @@ def register():
 def execute_script():
     try:
         # Run the Python script using subprocess
-        result = subprocess.run([sys.executable, 'detection.py'], capture_output=True, text=True, check=True)
+        # result = subprocess.run([sys.executable, 'detection.py'], capture_output=True, text=True, check=True)
+        result = subprocess.run([sys.executable, 'detection_enablelogging.py'], capture_output=True, text=True, check=True)
         # Log the output
         logging.info(f"Execution Time: {datetime.now()}")
         logging.info(result.stdout)
