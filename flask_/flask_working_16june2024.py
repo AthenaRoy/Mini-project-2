@@ -1,11 +1,7 @@
-import logging
-import subprocess
 from flask import Flask, redirect, url_for, render_template, request, session, flash, send_from_directory
-from datetime import datetime, timedelta
-from flask import jsonify
+from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
 
-import sys
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, StringField, PasswordField
 from wtforms import FileField
@@ -100,29 +96,28 @@ def upload():
     form = UploadFileForm()
     if form.validate_on_submit():
         file = form.file.data
-        filename = secure_filename(file.filename)
-        upload_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'])
-        os.makedirs(upload_folder, exist_ok=True)
+        file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'],secure_filename(file.filename)))
+        product_name = request.form.get("product_name")
 
-        file_path = os.path.join(upload_folder, filename)
-        file.save(file_path)
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+    
+        file = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file)
         
         bucket = storage.bucket()
-        blob = bucket.blob(f'videos/{filename}')
+        blob = bucket.blob(f'videos/{file}')
         blob.upload_from_filename(file_path)
 
     
-        product_name = request.form.get("product_name")
+
         upload_video = Videos(username=username, product_name=product_name, video=file_path,review=None)
         db.session.add(upload_video)
         db.session.commit()
-        
-        return redirect(url_for('upload_success'))
-    return render_template("upload_16june2024.html", form=form)
+        return "File has been uploaded."
+    return render_template("upload.html", form=form)
     
-@app.route("/upload_success")
-def upload_success():
-    return render_template("upload_success.html")
+
 
 @app.route("/")
 def home():
@@ -204,38 +199,6 @@ def register():
         return redirect(url_for("upload"))
     
     return render_template('register.html', form=form)
-
-# Route to execute the Python script
-@app.route('/execute_script', methods=['POST'])
-def execute_script():
-    try:
-        # Run the Python script using subprocess
-        result = subprocess.run([sys.executable, 'detection.py'], capture_output=True, text=True, check=True)
-        # Log the output
-        logging.info(f"Execution Time: {datetime.now()}")
-        logging.info(result.stdout)
-        return jsonify({'success': True, 'output': result.stdout})
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Execution Time: {datetime.now()}")
-        logging.error(e)
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# Route to fetch logs
-@app.route('/get_logs', methods=['GET'])
-def get_logs():
-    log_file_path = os.path.join(os.getcwd(), 'script.log')
-
-    # Check if the file exists; if not, create an empty file
-    if not os.path.exists(log_file_path):
-        with open(log_file_path, 'w') as log_file:
-            log_file.write('')  # Write an empty string to create the file
-
-    try:
-        with open(log_file_path, 'r') as log_file:
-            logs = log_file.read()
-        return jsonify({'success': True, 'logs': logs})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == "__main__":
     with app.app_context():

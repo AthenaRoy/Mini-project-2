@@ -1,3 +1,5 @@
+import os
+os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,8 +12,6 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import pandas as pd
-import os
-
 
 
 #LOSS AND ACCURACY PLOT
@@ -350,6 +350,3 @@ if cursor:
     cursor.close()
 if conn:
     conn.close()
-
-
-
