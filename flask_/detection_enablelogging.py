@@ -12,10 +12,6 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import pandas as pd
 import cv2
 import numpy as np
-import firebase_admin
-from firebase_admin import credentials, initialize_app, storage, get_app
-from firebase_admin.exceptions import FirebaseError
-import requests
 import psycopg2
 import logging
 
@@ -72,16 +68,28 @@ validation_generator = datagen.flow_from_directory(
         color_mode="grayscale",
         class_mode='categorical')
 
-
+import firebase_admin
+from firebase_admin import credentials, initialize_app, storage, get_app
+from firebase_admin.exceptions import FirebaseError
+import requests
 # Initialize Firebase app if not already initialized
 try:
     firebase_app = get_app()
-except ValueError:  # Raised if get_app() cannot find the app
-    cred = credentials.Certificate('C:/Users/athen/OneDrive/Documents/Mini project 2/mini-project-d9780-firebase-adminsdk-excc6-1f7073b6d8.json')
-    initialize_app(cred, {
-        'storageBucket': 'mini-project-d9780.appspot.com'
-    })
-    firebase_app = get_app()
+except ValueError:
+
+    try:  # Raised if get_app() cannot find the app
+        cred = credentials.Certificate('C:/Users/athen/OneDrive/Documents/Mini project 2/mini-project-d9780-firebase-adminsdk-excc6-1f7073b6d8.json')
+        initialize_app(cred, {
+            'storageBucket': 'mini-project-d9780.appspot.com'
+        })
+        firebase_app = get_app()
+        print("Firebase app initialized successfully.")
+    except FileNotFoundError as e:
+        print(f"Error: Firebase credentials file not found - {e}")
+    except FirebaseError as e:
+        print(f"Error initializing Firebase app: {e}")
+    except Exception as e:
+        print(f"Unexpected error initializing Firebase app: {e}")
 
 def download_video(file_name):
     bucket = storage.bucket()
@@ -119,6 +127,10 @@ class EmotionDetector:
 class Video:
     def __init__(self, download_path):
         self.path = download_path
+        print(f"Attempting to open video at: {download_path}")
+        if not os.path.isfile(download_path):
+            print(f"Error: Video file does not exist at {download_path}")
+            return
         self.capture = cv2.VideoCapture(download_path)
         if not self.capture.isOpened():
             print("Error: Could not open video.")
@@ -171,10 +183,9 @@ def download_video_from_firebase(file_name):
     # Construct the download path
     download_path = os.path.join(video_directory, os.path.basename(file_name))
     try:
-        with open(download_path, "wb") as file_obj:
-            blob.download_to_file(file_obj)
+        blob.download_to_filename(download_path)
         print(f"Downloaded {file_name} to {download_path}")
-
+        return download_path
 
     except FirebaseError as e:
         print(f"Error downloading {file_name}: {e}")
@@ -184,14 +195,19 @@ def download_video_from_firebase(file_name):
         return None
 
 def process_video(download_path):
+    if download_path is None:
+        print("Error: download_path is None.")
+        return None
     video_directory = "./videos"
     video_files = os.listdir(video_directory)
-    video = Video(download_path)
+    if not video_files:
+        print("Error: No video files found in directory.")
+        return None
+    video_file = video_files[0]
+    download_path = f"{video_directory}/{video_file}"
+    
     results2 = []
-    if video_files:
-        # Get the first file in the directory
-        video_file = video_files[0]
-        download_path = f"{video_directory}/{video_file}"
+    try:
 
         # Process the video with your model
         print(f"Processing video: {download_path}")
@@ -215,13 +231,12 @@ def process_video(download_path):
         model.add(Dropout(0.5))
         model.add(Dense(7, activation='softmax'))
 
-        model.save('emotion_detection_model.h5')
-        model = keras.models.load_model("emotion_detection_model.h5")
+        model.save('flask_/emotion_detection_model.h5')
+        model = keras.models.load_model("flask_/emotion_detection_model.h5")
         model.compile(optimizer='adam',
                       loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
                       metrics=['accuracy'])
         
-        os.environ['PYTHONIOENCODING'] = 'utf-8'
         history = model.fit(
             train_generator,
             steps_per_epoch=num_train // batch_size,
@@ -239,9 +254,10 @@ def process_video(download_path):
         # Delete the video file after processing
         os.remove(download_path)
         print(f"Deleted video: {download_path}")
-        return results2
-    else:
-        print("No video files to process.")
+        return results2, download_path
+    except Exception as e:
+        print(f"Error processing video: {e}")
+        return None, None
     
 def fetch_video_filenames():
     # Example: Fetch filenames from Firebase Storage
@@ -261,7 +277,7 @@ try:
 
     for filename in video_filenames:
         download_path = download_video_from_firebase(filename)
-        current_results = process_video(download_path)
+        current_results, download_path = process_video(download_path)
         print(f"Analyzing {filename}, got results: {current_results}")
 
     if current_results is None:
@@ -272,19 +288,19 @@ try:
             "angry": [], "disgust": [], "fear": [], "sad": []}
 
     # Populate the DataFrame with results
-    for frame_count, emotions in current_results:
-        data["frame_count"].append(frame_count)
-        data["happy"].append(emotions.count("happy"))
-        data["surprise"].append(emotions.count("surprise"))
-        data["angry"].append(emotions.count("angry"))
-        data["disgust"].append(emotions.count("disgust"))
-        data["fear"].append(emotions.count("fear"))
-        data["sad"].append(emotions.count("sad"))
-    emotions_df = pd.DataFrame(data)
+        for frame_count, emotions in current_results:
+            data["frame_count"].append(frame_count)
+            data["happy"].append(emotions.count("happy"))
+            data["surprise"].append(emotions.count("surprise"))
+            data["angry"].append(emotions.count("angry"))
+            data["disgust"].append(emotions.count("disgust"))
+            data["fear"].append(emotions.count("fear"))
+            data["sad"].append(emotions.count("sad"))
+        emotions_df = pd.DataFrame(data)
 
-        # Display the first few rows of the DataFrame
-    print(emotions_df.head())
-    raise ValueError("Simulated error for testing.")  # Remove this line after testing
+            # Display the first few rows of the DataFrame
+        print(emotions_df.head())
+    #raise ValueError("Simulated error for testing.")  # Remove this line after testing
     logging.info("Detection script finished successfully.")
 except Exception as e:
     logging.error(f"Error in detection script: {e}")
@@ -307,10 +323,9 @@ except Exception as e:
     conn, cursor = None, None
 
 def standardize_path(filename):
-    return filename.replace('videos/','static/files\\')
+    return filename.replace('videos/','static\\files\\')
 
 path_to_video = standardize_path(filename)
-
 
 def update_results(cursor, conn, current_results, path_to_video):
     try:

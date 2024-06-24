@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import RotatingFileHandler
 import subprocess
 from flask import Flask, redirect, url_for, render_template, request, session, flash, send_from_directory
 from datetime import datetime, timedelta
@@ -33,6 +34,12 @@ app = Flask(__name__)
 app.secret_key = "hello"
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['UPLOAD_FOLDER'] = 'static/files'
+log_file_path = 'script.log'
+log_handler = RotatingFileHandler(log_file_path, maxBytes=10000, backupCount=3)
+log_handler.setLevel(logging.INFO)
+log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+log_handler.setFormatter(log_formatter)
+app.logger.addHandler(log_handler)
 
 db = SQLAlchemy(app)
 
@@ -105,6 +112,7 @@ def upload():
 
         file_path = os.path.join(upload_folder, filename)
         file.save(file_path)
+        relative_path = os.path.relpath(file_path, os.path.abspath(os.path.dirname(__file__)))
         
         bucket = storage.bucket()
         blob = bucket.blob(f'videos/{filename}')
@@ -112,7 +120,7 @@ def upload():
 
     
         product_name = request.form.get("product_name")
-        upload_video = Videos(username=username, product_name=product_name, video=file_path,review=None)
+        upload_video = Videos(username=username, product_name=product_name, video=relative_path,review=None)
         db.session.add(upload_video)
         db.session.commit()
         
@@ -123,8 +131,9 @@ def upload():
 def upload_success():
     return render_template("upload_success.html")
 
-@app.route("/")
+@app.route("/home")
 def home():
+    flash("Login successful!")
     return render_template("index.html")
 
 @app.route("/view")
@@ -132,7 +141,7 @@ def view():
     return render_template("view.html", values=Users.query.all())
 
 
-@app.route("/login", methods=["POST", "GET"])
+@app.route("/", methods=["POST", "GET"])
 def login():
     form = RegistrationForm()
     if request.method == "POST":
@@ -141,11 +150,10 @@ def login():
         session['username'] = user
 
         found_user = Users.query.filter_by(username=user, passcode=passcode).first()
-        print(user)
+        
         
 
         if found_user:
-            flash("Login successful!")
             return redirect(url_for("home"))
 
         else:
@@ -153,7 +161,7 @@ def login():
             return redirect(url_for("register"))
         
          
-    return render_template("final_login.html",form=form)
+    return render_template("login.html",form=form)
 
 
 @app.route("/user", methods=["POST" , "GET"])
@@ -195,6 +203,10 @@ def register():
         passcode = form.passcode.data
         session['username'] = username
 
+        existing_user = Users.query.filter_by(username=username).first()
+        if existing_user:
+            flash("Username already exists. Please choose a different username.", 'error')
+            return redirect(url_for('register'))
             # Create a new user object and add it to the database
         new_user = Users(username=username, passcode=passcode)
         db.session.add(new_user)
@@ -211,16 +223,18 @@ def execute_script():
     try:
         # Run the Python script using subprocess
         # result = subprocess.run([sys.executable, 'detection.py'], capture_output=True, text=True, check=True)
-        result = subprocess.run([sys.executable, 'detection_enablelogging.py'], capture_output=True, text=True, check=True)
+        result = subprocess.run([sys.executable, 'flask_/detection_enablelogging.py'], capture_output=True, text=True, check=True)
+        update_results =result.stdout
         # Log the output
-        logging.info(f"Execution Time: {datetime.now()}")
-        logging.info(result.stdout)
+        app.logger.info(f"Execution Time: {datetime.now()}")
+        app.logger.info(result.stdout)
         return jsonify({'success': True, 'output': result.stdout})
     except subprocess.CalledProcessError as e:
-        logging.error(f"Execution Time: {datetime.now()}")
-        logging.error(e)
-        return jsonify({'success': False, 'error': str(e)}), 500
-
+        app.logger.error(f"Execution Time: {datetime.now()}")
+        app.logger.error(f"Return Code: {e.returncode}")
+        app.logger.error(f"Standard Output: {e.stdout}")
+        app.logger.error(f"Standard Error: {e.stderr}")
+        return jsonify({'success': False, 'error': e.stderr}), 500
 # Route to fetch logs
 @app.route('/get_logs', methods=['GET'])
 def get_logs():
